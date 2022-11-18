@@ -11,6 +11,7 @@
 #include "threads/switch.h"
 #include "threads/synch.h"
 #include "threads/vaddr.h"
+#include "extras.h"
 #ifdef USERPROG
 #include "userprog/process.h"
 #endif
@@ -27,6 +28,9 @@ static struct list ready_list;
 /* List of all processes.  Processes are added to this list
    when they are first scheduled and removed when they exit. */
 static struct list all_list;
+
+/* The processes put to sleep by thread_sleep() are stored here */
+static struct list sleep_list;
 
 /* Idle thread. */
 static struct thread *idle_thread;
@@ -92,6 +96,7 @@ thread_init (void)
   lock_init (&tid_lock);
   list_init (&ready_list);
   list_init (&all_list);
+  list_init (&sleep_list);
 
   /* Set up a thread structure for the running thread. */
   initial_thread = running_thread ();
@@ -241,6 +246,49 @@ thread_unblock (struct thread *t)
   t->status = THREAD_READY;
   intr_set_level (old_level);
 }
+
+/*
+    Puts the current thread to sleep until specified ticks have passed
+*/
+void
+thread_sleep(int64_t until)
+{
+    struct thread *curr = thread_current ();
+    if (curr != idle_thread)
+    {
+        enum intr_level old_level = intr_disable ();
+
+        curr->wakeat = until;
+        list_insert_ordered (&sleep_list, &curr->elem, compare_wakeat, NULL);
+        thread_block ();
+
+        intr_set_level (old_level);
+    }
+}
+
+/*
+    Wakes up the next thread that has to be woken up after specified ticks have passed.
+    Returns true if a thread was woken up, and false if the sleep list is empty or
+    all the threads have been woken up
+*/
+bool
+wake_next(int64_t tick)
+{
+    if (list_empty(&sleep_list))
+        return false;
+    struct list_elem *e = list_front(&sleep_list);
+    struct thread *t = list_entry (e, struct thread, elem);
+    if (t -> wakeat > tick)
+        return false;
+    list_pop_front(&sleep_list);
+
+    enum intr_level old_level = intr_disable ();
+    list_push_back (&ready_list, &t->elem);
+    t->status = THREAD_READY;
+    intr_set_level (old_level);
+    return true;
+}
+
 
 /* Returns the name of the running thread. */
 const char *

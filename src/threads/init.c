@@ -130,35 +130,38 @@ pintos_init (void)
 
   printf ("Boot complete.\n");
   
-  if (*argv != NULL) {
+  if (*argv != NULL)
+  {
     /* Run actions specified on kernel command line. */
     run_actions (argv);
-  } else {
+  }
+  else {
         int len = 32;
         char* word;
 
-        while (true) {
+        while (true)
+        {
             printf("> ");
             word = readline(len);
             printf("\n");
-            if (!strcmp(word, "whoami")) {
+            if (!strcmp(word, "whoami"))
                 printf("hi, name is rashad. index is 200525R :)\n");
-            } else if (!strcmp(word, "shutdown")) {
+            else if (!strcmp(word, "shutdown"))
                 shutdown_power_off ();
-            } else if (!strcmp(word, "exit")) {
+            else if (!strcmp(word, "exit"))
+            {
                 printf("exiting\n");
                 break;
-            } else if (!strcmp(word, "time")) {
+            } else if (!strcmp(word, "time"))
                 printf("Seconds since UNIX epoch: %lu\n", rtc_get_time());
-            } else if (!strcmp(word, "ram")) {
+            else if (!strcmp(word, "ram"))
                 printf("Available RAM: %d KB\n", init_ram_pages * PGSIZE / 1024);
-            } else if (!strcmp(word, "thread")) {
+            else if (!strcmp(word, "thread"))
                 thread_print_stats();
-            } else if (!strcmp(word, "priority")) {
+            else if (!strcmp(word, "priority"))
                 printf("Priority of current thread: %d\n", thread_get_priority());
-            } else {
+            else
                 printf("Invalid input :(\n");
-            }
         }
     }
 
